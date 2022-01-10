@@ -1,5 +1,4 @@
-﻿using Aspose.Words;
-
+﻿
 using Microsoft.Win32;
 
 using NPOI.SS.UserModel;
@@ -20,7 +19,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Forms;
+using Forms = System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -34,6 +33,7 @@ namespace OfficeHelper
     public partial class MainWindow : Window
     {
         private List<WordValue> values;
+        private bool accepted;
 
         public List<Column> Columns { get; set; } = new();
         public string WordPath { get; set; }
@@ -128,44 +128,66 @@ namespace OfficeHelper
             }
         }
 
-        private void btnStart_Click(object sender, RoutedEventArgs e)
+        private async void btnStart_Click(object sender, RoutedEventArgs e)
         {
             //PrintDialog printDialog = new PrintDialog();
             //DialogResult result = printDialog.ShowDialog();
             //if (result == System.Windows.Forms.DialogResult.OK)
             //{
+            accepted = false;
             RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\App Paths\winword.exe");
             string exepath = key.GetValue("").ToString();
             ProcessStartInfo info = new ProcessStartInfo()
-                {
-                    FileName = exepath,
-                    CreateNoWindow = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
+            {
+                FileName = exepath,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
 
-                pbMain.Maximum = dgMain.Items.Count;
-                for (int i = 0; i < dgMain.Items.Count; i++)
+            pbMain.Maximum = dgMain.Items.Count;
+            for (int i = 0; i < dgMain.Items.Count; i++)
+            {
+                using (FileStream sw = File.OpenRead(WordPath))
                 {
-                    using (FileStream sw = File.OpenRead(WordPath))
+                    XWPFDocument doc = new XWPFDocument(sw);
+                    foreach (var value in values)
                     {
-                        XWPFDocument doc = new XWPFDocument(sw);
-                        foreach (var value in values)
-                        {
-                            var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
-                            text = text.Replace(Columns[value.ColumnIndex].Name, ((DataRowView)dgMain.Items[i])[value.ColumnIndex].ToString());
-                            doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text);
-                        }
-                        using (var file = File.Create(GetFileName(System.IO.Path.GetFileName(WordPath))))
-                        {
-                            doc.Write(file);
-                            info.Arguments = $"\"{file.Name}\" /mFilePrintDefault /mFileExit /q /n";
-                        }
-                        Process.Start(info);
+                        var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
+                        text = text.Replace(Columns[value.ColumnIndex].Name, ((DataRowView)dgMain.Items[i])[value.ColumnIndex].ToString());
+                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text);
                     }
-
-                    pbMain.Value++;
-                    ShowProcess($"{i}-qator chop etishg berildi!");
+                    var fileName = "";
+                    using (var file = File.Create(GetFileName(System.IO.Path.GetFileName(WordPath))))
+                    {
+                        doc.Write(file);
+                        fileName = file.Name;
+                    }
+                    info.Arguments = $"\"{fileName}\" /mFilePrintDefault /mFileExit /q /n";
+                    if (accepted || MessageBox.Show("Birinchi fayl tayyorlandi, Ko'rib tekshiring!", "Ogohlantirish", MessageBoxButton.OK) == MessageBoxResult.OK)
+                    {
+                        if (!accepted)
+                        {
+                            var word = Process.Start(new ProcessStartInfo(exepath, $"\"{fileName}\""));
+                            word.WaitForExit();
+                        }
+                        if (accepted || MessageBox.Show("Sizga ma'qulmi? Chop etilsinmi?", "Ogohlantirish", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                        {
+                            accepted = true;
+                            var proc = Process.Start(info);
+                            while (proc.MainWindowHandle == default(IntPtr))
+                            {
+                                await Task.Delay(1000);
+                            }
+                            proc.Kill();
+                        }
+                        else break;
+                    }
+                    else if (!accepted) break;
                 }
+
+                pbMain.Value++;
+                ShowProcess($"{i + 1}-qator chop etishga berildi!");
+            }
             //}
         }
 
