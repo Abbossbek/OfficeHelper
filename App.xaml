@@ -13,11 +13,7 @@
                                                  SecondaryColor="LightBlue" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml" />
                 <ResourceDictionary>
-                    <Style TargetType="{x:Type Button}"
-                           BasedOn="{StaticResource MaterialDesignFlatButton}">
-                        <Setter Property="Foreground"
-                                Value="White" />
-                    </Style>
+                    
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
