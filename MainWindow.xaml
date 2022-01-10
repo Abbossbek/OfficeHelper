@@ -6,11 +6,14 @@
         xmlns:local="clr-namespace:OfficeHelper"
         mc:Ignorable="d"
         Name="mainWindow"
+        ResizeMode="CanMinimize"
+        WindowState="Maximized"
+        Foreground="White"
         Title="MainWindow" Height="600" Width="800">
-    <Grid>
+    <Grid Background="{DynamicResource MaterialDesignDarkBackground}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"
@@ -21,9 +24,10 @@
         </Grid.RowDefinitions>
         <Border Margin="10"
                 CornerRadius="10">
-            <DataGrid x:Name="dgMain" />
+            <DataGrid x:Name="dgMain" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
         </Border>
             <ProgressBar Grid.Row="1"
+                         Name="pbMain"
                          Margin="10" 
                          Height="20"/>
 
@@ -36,7 +40,7 @@
                     Padding="5">
                 <StackPanel>
 
-                    <TextBlock Text="ARGram"
+                    <TextBlock Text="Office Helper"
                                HorizontalAlignment="Center"
                                FontSize="24" />
                     <TextBlock HorizontalAlignment="Center"
@@ -50,17 +54,17 @@
             </Border>
             <TextBlock  />
             <ScrollViewer Margin="0,5"
-                          Height="150">
-                <ItemsControl ItemsSource="{Binding ElementName=mainWindow, Path=Columns}"
+                          Height="335">
+                <ItemsControl ItemsSource="{Binding ElementName=mainWindow, Path=Columns, UpdateSourceTrigger=PropertyChanged}"
                               x:Name="lbColumns"
                               Background="{StaticResource MaterialDesignDarkSeparatorBackground}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <DockPanel Height="35"
                                        Width="{Binding Source={RelativeSource AncestorType=ListBoxItem}, Path=ActualWidth}">
-                                <CheckBox IsChecked="{Binding Value}"
+                                <CheckBox IsChecked="{Binding IsChecked}"
                                           DockPanel.Dock="Left" />
-                                <TextBlock Text="{Binding Key}"
+                                <TextBlock Text="{Binding Name}"
                                            VerticalAlignment="Center"
                                            Margin="10,0" />
                             </DockPanel>
@@ -68,6 +72,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
+            
             <Button Margin="0,5"
                     Name="btnOpenExcel"
                     Content="Excel fayl tanlash"

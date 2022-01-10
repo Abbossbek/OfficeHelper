@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using Aspose.Words;
+
+using Microsoft.Win32;
 
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
@@ -10,19 +12,19 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace OfficeHelper
 {
@@ -31,8 +33,10 @@ namespace OfficeHelper
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<WordValue> Values;
-        public Dictionary<string, bool> Columns;
+        private List<WordValue> values;
+
+        public List<Column> Columns { get; set; } = new();
+        public string WordPath { get; set; }
 
         public MainWindow()
         {
@@ -41,7 +45,7 @@ namespace OfficeHelper
 
         private void btnOpenExcel_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dialog = new();
+            Microsoft.Win32.OpenFileDialog dialog = new();
             dialog.Filter = "Excel fayllar|*.xlsx";
             if (dialog.ShowDialog(this) == true)
             {
@@ -53,30 +57,23 @@ namespace OfficeHelper
                     stream.Position = 0;
                     XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
                     sheet = xssWorkbook.GetSheetAt(0);
-                    IRow headerRow = sheet.GetRow(5);
+                    IRow headerRow1 = sheet.GetRow(3);
+                    IRow headerRow2 = sheet.GetRow(4);
 
-                    Columns = new();
-                    foreach (var item in headerRow.Cells.Where(x=>!string.IsNullOrWhiteSpace(x.StringCellValue)))
-                    {
-                        var key = item.StringCellValue;
-                        while (Columns.ContainsKey(key))
-                        {
-                            key += "*";
-                        }
-                        Columns.Add($"[{item.StringCellValue}]", false);
-                    }
-                    lbColumns.Items.Refresh();
-
-                    int cellCount = headerRow.LastCellNum;
+                    int cellCount = headerRow1.LastCellNum;
+                    Columns.Clear();
                     for (int j = 0; j < cellCount; j++)
                     {
-                        NPOI.SS.UserModel.ICell cell = headerRow.GetCell(j);
-                        if (cell == null || string.IsNullOrWhiteSpace(cell.ToString())) continue;
+                        string name = headerRow2.GetCell(j).ToString();
+                        if (name == null || string.IsNullOrWhiteSpace(name))
                         {
-                            dtTable.Columns.Add(cell.ToString());
+                            name = headerRow1.GetCell(j).ToString();
                         }
+                        dtTable.Columns.Add(name);
+                        Columns.Add(new() { Name = $"[{name}]", IsChecked = false });
                     }
-                    for (int i = (headerRow.RowNum + 1); i <= sheet.LastRowNum; i++)
+                    lbColumns.Items.Refresh();
+                    for (int i = (headerRow2.RowNum + 1); i <= sheet.LastRowNum; i++)
                     {
                         IRow row = sheet.GetRow(i);
                         if (row == null) continue;
@@ -102,25 +99,26 @@ namespace OfficeHelper
 
         private void btnSelectWord_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dialog = new();
+            Microsoft.Win32.OpenFileDialog dialog = new();
             dialog.Filter = "Word fayllar|*.docx";
             if (dialog.ShowDialog(this) == true)
             {
-                using (FileStream sw = File.OpenRead(dialog.FileName))
+                WordPath = dialog.FileName;
+                using (FileStream sw = File.OpenRead(WordPath))
                 {
                     XWPFDocument doc = new XWPFDocument(sw);
-                    Values = new();
-                    foreach (var column in Columns)
+                    values = new();
+                    for (int h = 0; h < Columns.Count; h++)
                     {
                         for (int i = 0; i < doc.Paragraphs.Count; i++)
                         {
                             for (int j = 0; j < doc.Paragraphs[i].Runs.Count; j++)
                             {
                                 string text = doc.Paragraphs[i].Runs[j].GetText(0);
-                                if (text != null && text.Contains(column.Key))
+                                if (text != null && text.Contains(Columns[h].Name))
                                 {
-                                    Columns[column.Key] = true;
-                                    Values.Add(new() { ColumnKey = column.Key, ParagraphIndex = i, RunIndex = j });
+                                    Columns[h].IsChecked = true;
+                                    values.Add(new() { ColumnIndex = h, ParagraphIndex = i, RunIndex = j });
                                 }
                             }
                         }
@@ -132,13 +130,53 @@ namespace OfficeHelper
 
         private void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in dgMain.Items)
-            {
-                foreach (var value in Values)
+            //PrintDialog printDialog = new PrintDialog();
+            //DialogResult result = printDialog.ShowDialog();
+            //if (result == System.Windows.Forms.DialogResult.OK)
+            //{
+            RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\App Paths\winword.exe");
+            string exepath = key.GetValue("").ToString();
+            ProcessStartInfo info = new ProcessStartInfo()
                 {
+                    FileName = exepath,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
 
+                pbMain.Maximum = dgMain.Items.Count;
+                for (int i = 0; i < dgMain.Items.Count; i++)
+                {
+                    using (FileStream sw = File.OpenRead(WordPath))
+                    {
+                        XWPFDocument doc = new XWPFDocument(sw);
+                        foreach (var value in values)
+                        {
+                            var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
+                            text = text.Replace(Columns[value.ColumnIndex].Name, ((DataRowView)dgMain.Items[i])[value.ColumnIndex].ToString());
+                            doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text);
+                        }
+                        using (var file = File.Create(GetFileName(System.IO.Path.GetFileName(WordPath))))
+                        {
+                            doc.Write(file);
+                            info.Arguments = $"\"{file.Name}\" /mFilePrintDefault /mFileExit /q /n";
+                        }
+                        Process.Start(info);
+                    }
+
+                    pbMain.Value++;
+                    ShowProcess($"{i}-qator chop etishg berildi!");
                 }
+            //}
+        }
+
+        private string GetFileName(string name)
+        {
+            var dirPath = AppDomain.CurrentDomain.BaseDirectory + "Temp";
+            if (!Directory.Exists(dirPath))
+            {
+                Directory.CreateDirectory(dirPath);
             }
+            return $"{dirPath}/{DateTime.Now.Ticks}_{name}";
         }
 
         private void btnShowProcess_Click(object sender, RoutedEventArgs e)

@@ -8,7 +8,7 @@ namespace OfficeHelper.Models
 {
     public class WordValue
     {
-        public string ColumnKey { get; set; }
+        public int ColumnIndex { get; set; }
         public int ParagraphIndex { get; set; }
         public int RunIndex { get; set; }
     }
