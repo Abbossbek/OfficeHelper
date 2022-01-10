@@ -9,7 +9,7 @@
         ResizeMode="CanMinimize"
         WindowState="Maximized"
         Foreground="White"
-        Title="MainWindow" Height="600" Width="800">
+        Title="Office Helper" Height="600" Width="800">
     <Window.Resources>
         <Style
             TargetType="{x:Type Button}"
@@ -33,7 +33,7 @@
         </Grid.RowDefinitions>
         <Border Margin="10"
                 CornerRadius="10">
-            <DataGrid x:Name="dgMain" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
+            <DataGrid x:Name="dgMain" AutoGeneratingColumn="dgMain_AutoGeneratingColumn" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
         </Border>
             <ProgressBar Grid.Row="1"
                          Name="pbMain"

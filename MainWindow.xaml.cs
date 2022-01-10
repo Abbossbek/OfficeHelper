@@ -24,6 +24,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Windows.Controls;
 
 namespace OfficeHelper
 {
@@ -93,7 +94,7 @@ namespace OfficeHelper
                         rowList.Clear();
                     }
                 }
-                dgMain.ItemsSource = dtTable.DefaultView;
+                dgMain.ItemsSource = dtTable.AsDataView();
             }
         }
 
@@ -224,6 +225,16 @@ namespace OfficeHelper
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
             Process.Start("https://t.me/Programmer1718");
+        }
+
+        private void dgMain_AutoGeneratingColumn(object sender, System.Windows.Controls.DataGridAutoGeneratingColumnEventArgs e)
+        {
+            var dGrid = (sender as DataGrid);
+            if (dGrid == null) return;
+            var view = dGrid.ItemsSource as DataView;
+            if (view == null) return;
+            var table = view.Table;
+            e.Column.Header = table.Columns[e.Column.Header as String].Caption;
         }
     }
 }
