@@ -159,8 +159,8 @@ namespace OfficeHelper
                     foreach (var value in values)
                     {
                         var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
-                        text = text.Replace(Columns[value.ColumnIndex].Name, ((DataRowView)dgMain.Items[i])[value.ColumnIndex].ToString());
-                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text);
+                        text = text.Replace(Columns[value.ColumnIndex].Name, ((string[])dgMain.Items[i])[value.ColumnIndex].ToString());
+                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text,0);
                     }
                     var fileName = "";
                     using (var file = File.Create(GetFileName(System.IO.Path.GetFileName(WordPath))))
