@@ -63,6 +63,7 @@ namespace OfficeHelper
 
                     int cellCount = headerRow1.LastCellNum;
                     Columns.Clear();
+                    dgMain.Columns.Clear();
                     for (int j = 0; j < cellCount; j++)
                     {
                         string name = headerRow2.GetCell(j).ToString();
@@ -70,10 +71,11 @@ namespace OfficeHelper
                         {
                             name = headerRow1.GetCell(j).ToString();
                         }
-                        dtTable.Columns.Add(name);
+                        dgMain.Columns.Add(new DataGridTextColumn() { Header = name, Binding = new Binding($"[{j}]") });
                         Columns.Add(new() { Name = $"[{name}]", IsChecked = false });
                     }
                     lbColumns.Items.Refresh();
+                    dgMain.Items.Clear();
                     for (int i = (headerRow2.RowNum + 1); i <= sheet.LastRowNum; i++)
                     {
                         IRow row = sheet.GetRow(i);
@@ -90,11 +92,14 @@ namespace OfficeHelper
                             }
                         }
                         if (rowList.Count > 0)
-                            dtTable.Rows.Add(rowList.ToArray());
+                        {
+                            dgMain.Items.Add(rowList.ToArray());
+                        }
+                        dgMain.Items.Refresh();
                         rowList.Clear();
                     }
                 }
-                dgMain.ItemsSource = dtTable.AsDataView();
+                //dgMain.ItemsSource = dtTable.AsDataView();
             }
         }
 
@@ -229,12 +234,18 @@ namespace OfficeHelper
 
         private void dgMain_AutoGeneratingColumn(object sender, System.Windows.Controls.DataGridAutoGeneratingColumnEventArgs e)
         {
-            var dGrid = (sender as DataGrid);
-            if (dGrid == null) return;
-            var view = dGrid.ItemsSource as DataView;
-            if (view == null) return;
-            var table = view.Table;
-            e.Column.Header = table.Columns[e.Column.Header as String].Caption;
+            //var dGrid = (sender as DataGrid);
+            //if (dGrid == null) return;
+            //var view = dGrid.ItemsSource as DataView;
+            //if (view == null) return;
+            //var table = view.Table;
+            //e.Column.Header = table.Columns[e.Column.Header as String].Caption;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            var text = ((Column)((Button)sender).DataContext).Name;
+            Clipboard.SetText(text);
         }
     }
 }

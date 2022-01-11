@@ -33,7 +33,7 @@
         </Grid.RowDefinitions>
         <Border Margin="10"
                 CornerRadius="10">
-            <DataGrid x:Name="dgMain" AutoGeneratingColumn="dgMain_AutoGeneratingColumn" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
+            <DataGrid x:Name="dgMain"  AutoGeneratingColumn="dgMain_AutoGeneratingColumn" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
         </Border>
             <ProgressBar Grid.Row="1"
                          Name="pbMain"
@@ -73,6 +73,12 @@
                                        Width="{Binding Source={RelativeSource AncestorType=ListBoxItem}, Path=ActualWidth}">
                                 <CheckBox IsChecked="{Binding IsChecked}"
                                           DockPanel.Dock="Left" />
+                                <Button
+                                    DockPanel.Dock="Right"
+                                    Content="Nusxa olish"
+                                           Background="Blue"
+                                    Margin="5,2"
+                                    Click="Button_Click" />
                                 <TextBlock Text="{Binding Name}"
                                            VerticalAlignment="Center"
                                            Margin="10,0" />
