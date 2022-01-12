@@ -150,8 +150,8 @@ namespace OfficeHelper
                 WindowStyle = ProcessWindowStyle.Hidden
             };
 
-            pbMain.Maximum = dgMain.Items.Count;
-            for (int i = 0; i < dgMain.Items.Count; i++)
+            pbMain.Maximum = dgMain.SelectedItems.Count;
+            foreach (string[] item in dgMain.SelectedItems)
             {
                 using (FileStream sw = File.OpenRead(WordPath))
                 {
@@ -159,7 +159,7 @@ namespace OfficeHelper
                     foreach (var value in values)
                     {
                         var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
-                        text = text.Replace(Columns[value.ColumnIndex].Name, ((string[])dgMain.Items[i])[value.ColumnIndex].ToString());
+                        text = text.Replace(Columns[value.ColumnIndex].Name, item[value.ColumnIndex].ToString());
                         doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text,0);
                     }
                     var fileName = "";
@@ -192,7 +192,7 @@ namespace OfficeHelper
                 }
 
                 pbMain.Value++;
-                ShowProcess($"{i + 1}-qator chop etishga berildi!");
+                ShowProcess($"{pbMain.Value + 1}-qator chop etishga berildi!");
             }
             //}
         }
