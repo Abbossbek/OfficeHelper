@@ -9,7 +9,7 @@
         ResizeMode="CanMinimize"
         WindowState="Maximized"
         Foreground="White"
-        Title="Office Helper" Height="600" Width="800">
+        Title="Office Helper" Height="800" Width="1000">
     <Window.Resources>
         <Style
             TargetType="{x:Type Button}"
@@ -17,6 +17,32 @@
             <Setter
                 Property="Foreground"
                 Value="White" />
+        </Style>
+        <Style
+            x:Key="TextBlockComboBoxStyle"
+            TargetType="{x:Type ComboBox}"
+            BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter
+                Property="Template">
+                <Setter.Value>
+                    <ControlTemplate
+                        TargetType="{x:Type ComboBox}">
+                        <Label
+                            Content="{TemplateBinding Text}"
+                            Style="{StaticResource {x:Type Label}}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style
+            TargetType="ComboBox"
+            x:Key="ComboBoxEditingStyle">
+            <Setter
+                Property="IsDropDownOpen"
+                Value="False" />
+            <Setter
+                Property="IsEditable"
+                Value="True" />
         </Style>
     </Window.Resources>
     <Grid Background="{DynamicResource MaterialDesignDarkBackground}">
@@ -33,7 +59,7 @@
         </Grid.RowDefinitions>
         <Border Margin="10"
                 CornerRadius="10">
-            <DataGrid x:Name="dgMain"  AutoGeneratingColumn="dgMain_AutoGeneratingColumn" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
+            <DataGrid x:Name="dgMain" AutoGenerateColumns="False" IsReadOnly="False" Background="{DynamicResource MaterialDesignDarkSeparatorBackground}" CanUserAddRows="False"/>
         </Border>
             <ProgressBar Grid.Row="1"
                          Name="pbMain"

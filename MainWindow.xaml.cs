@@ -25,6 +25,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Controls;
+using System.Collections.ObjectModel;
 
 namespace OfficeHelper
 {
@@ -33,7 +34,10 @@ namespace OfficeHelper
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<WordValue> values;
+        private static string DataPath = AppDomain.CurrentDomain.BaseDirectory + "Files/Data.xlsx";
+        private List<Data> keyValues = new();
+        private List<WordValue> valueIndexes;
+        private ObservableCollection<string[]> data = new();
         private bool accepted;
 
         public List<Column> Columns { get; set; } = new();
@@ -42,15 +46,46 @@ namespace OfficeHelper
         public MainWindow()
         {
             InitializeComponent();
+            ISheet sheet;
+            using (var stream = File.OpenRead(DataPath))
+            {
+                stream.Position = 0;
+                XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
+                sheet = xssWorkbook.GetSheetAt(0);
+                IRow headerRow = sheet.GetRow(0);
+
+                int cellCount = headerRow.LastCellNum;
+                for (int j = 0; j < cellCount; j++)
+                {
+                    string name = headerRow.GetCell(j).ToString();
+                    keyValues.Add(new Data { Name = name, Values = new() });
+                }
+                for (int i = (headerRow.RowNum + 1); i <= sheet.LastRowNum; i++)
+                {
+                    IRow row = sheet.GetRow(i);
+                    if (row == null) continue;
+                    if (row.Cells.All(d => d.CellType == CellType.Blank)) continue;
+                    for (int j = row.FirstCellNum; j < cellCount; j++)
+                    {
+                        if (row.GetCell(j) != null)
+                        {
+                            if (!string.IsNullOrEmpty(row.GetCell(j).ToString()) && !string.IsNullOrWhiteSpace(row.GetCell(j).ToString()))
+                            {
+                                keyValues.First(x => x.Name == headerRow.GetCell(j).StringCellValue).Values.Add(row.GetCell(j).StringCellValue);
+                            }
+                        }
+                    }
+                }
+            }
+            dgMain.ItemsSource = data;
         }
 
         private void btnOpenExcel_Click(object sender, RoutedEventArgs e)
         {
-            Microsoft.Win32.OpenFileDialog dialog = new();
+            OpenFileDialog dialog = new();
             dialog.Filter = "Excel fayllar|*.xlsx";
             if (dialog.ShowDialog(this) == true)
             {
-                DataTable dtTable = new DataTable();
                 List<string> rowList = new List<string>();
                 ISheet sheet;
                 using (var stream = File.OpenRead(dialog.FileName))
@@ -71,11 +106,28 @@ namespace OfficeHelper
                         {
                             name = headerRow1.GetCell(j).ToString();
                         }
-                        dgMain.Columns.Add(new DataGridTextColumn() { Header = name, Binding = new Binding($"[{j}]") });
+                        if (keyValues.Any(x => x.Name == name))
+                        {
+                            var column = new DataGridComboBoxColumn()
+                            {
+                                Header = name,
+                                ItemsSource = keyValues.First(x => x.Name == name).Values.ToList(),
+                                IsReadOnly = false,
+                                TextBinding = new Binding($"[{j}]") { ValidatesOnDataErrors=false, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
+                                EditingElementStyle = (Style)FindResource("ComboBoxEditingStyle"),
+                                ElementStyle = (Style)FindResource("TextBlockComboBoxStyle"),
+                                
+                            };
+                            dgMain.Columns.Add(column);
+                        }
+                        else
+                        {
+                            dgMain.Columns.Add(new DataGridTextColumn() { Binding = new Binding($"[{j}]"), Header = name });
+                        }
                         Columns.Add(new() { Name = $"[{name}]", IsChecked = false });
                     }
                     lbColumns.Items.Refresh();
-                    dgMain.Items.Clear();
+                    data.Clear();
                     for (int i = (headerRow2.RowNum + 1); i <= sheet.LastRowNum; i++)
                     {
                         IRow row = sheet.GetRow(i);
@@ -93,13 +145,12 @@ namespace OfficeHelper
                         }
                         if (rowList.Count > 0)
                         {
-                            dgMain.Items.Add(rowList.ToArray());
+                            data.Add(rowList.ToArray());
                         }
                         dgMain.Items.Refresh();
                         rowList.Clear();
                     }
                 }
-                //dgMain.ItemsSource = dtTable.AsDataView();
             }
         }
 
@@ -113,7 +164,7 @@ namespace OfficeHelper
                 using (FileStream sw = File.OpenRead(WordPath))
                 {
                     XWPFDocument doc = new XWPFDocument(sw);
-                    values = new();
+                    valueIndexes = new();
                     for (int h = 0; h < Columns.Count; h++)
                     {
                         for (int i = 0; i < doc.Paragraphs.Count; i++)
@@ -124,7 +175,7 @@ namespace OfficeHelper
                                 if (text != null && text.Contains(Columns[h].Name))
                                 {
                                     Columns[h].IsChecked = true;
-                                    values.Add(new() { ColumnIndex = h, ParagraphIndex = i, RunIndex = j });
+                                    valueIndexes.Add(new() { ColumnIndex = h, ParagraphIndex = i, RunIndex = j });
                                 }
                             }
                         }
@@ -136,10 +187,6 @@ namespace OfficeHelper
 
         private async void btnStart_Click(object sender, RoutedEventArgs e)
         {
-            //PrintDialog printDialog = new PrintDialog();
-            //DialogResult result = printDialog.ShowDialog();
-            //if (result == System.Windows.Forms.DialogResult.OK)
-            //{
             accepted = false;
             RegistryKey key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\App Paths\winword.exe");
             string exepath = key.GetValue("").ToString();
@@ -156,14 +203,14 @@ namespace OfficeHelper
                 using (FileStream sw = File.OpenRead(WordPath))
                 {
                     XWPFDocument doc = new XWPFDocument(sw);
-                    foreach (var value in values)
+                    foreach (var value in valueIndexes)
                     {
                         var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
                         text = text.Replace(Columns[value.ColumnIndex].Name, item[value.ColumnIndex].ToString());
-                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text,0);
+                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text, 0);
                     }
                     var fileName = "";
-                    using (var file = File.Create(GetFileName(System.IO.Path.GetFileName(WordPath))))
+                    using (var file = File.Create(GetFileName(Path.GetFileName(WordPath))))
                     {
                         doc.Write(file);
                         fileName = file.Name;
@@ -194,7 +241,6 @@ namespace OfficeHelper
                 pbMain.Value++;
                 ShowProcess($"{pbMain.Value + 1}-qator chop etishga berildi!");
             }
-            //}
         }
 
         private string GetFileName(string name)
@@ -230,16 +276,6 @@ namespace OfficeHelper
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
         {
             Process.Start("https://t.me/Programmer1718");
-        }
-
-        private void dgMain_AutoGeneratingColumn(object sender, System.Windows.Controls.DataGridAutoGeneratingColumnEventArgs e)
-        {
-            //var dGrid = (sender as DataGrid);
-            //if (dGrid == null) return;
-            //var view = dGrid.ItemsSource as DataView;
-            //if (view == null) return;
-            //var table = view.Table;
-            //e.Column.Header = table.Columns[e.Column.Header as String].Caption;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
