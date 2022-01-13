@@ -21,7 +21,7 @@
         <Style
             x:Key="TextBlockComboBoxStyle"
             TargetType="{x:Type ComboBox}"
-            BasedOn="{StaticResource {x:Type ComboBox}}">
+            BasedOn="{StaticResource MaterialDesignComboBox}">
             <Setter
                 Property="Template">
                 <Setter.Value>
@@ -36,7 +36,8 @@
         </Style>
         <Style
             TargetType="ComboBox"
-            x:Key="ComboBoxEditingStyle">
+            x:Key="ComboBoxEditingStyle"
+            BasedOn="{StaticResource MaterialDesignComboBox}">
             <Setter
                 Property="IsDropDownOpen"
                 Value="False" />
@@ -44,6 +45,8 @@
                 Property="IsEditable"
                 Value="True" />
         </Style>
+        <Style
+            TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}"/>
     </Window.Resources>
     <Grid Background="{DynamicResource MaterialDesignDarkBackground}">
         <Grid.ColumnDefinitions>
@@ -122,6 +125,15 @@
                     Name="btnSelectWord"
                     Content="Word fayl tanlash"
                     Click="btnSelectWord_Click" />
+            <Button Margin="0,5"
+                    Name="btnNewRow"
+                    Content="Yangi qator qo'shish"
+                    Click="btnNewRow_Click" />
+            <Button Margin="0,5"
+                    IsEnabled="False"
+                    Name="btnExportToExcel"
+                    Content="Excel fayl sifatida saqlash"
+                    Click="btnExportToExcel_Click" />
             <Button Margin="0,5"
                     Name="btnStart"
                     Content="Boshlash"

@@ -34,7 +34,8 @@ namespace OfficeHelper
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static string DataPath = AppDomain.CurrentDomain.BaseDirectory + "Files/Data.xlsx";
+        private static string dataPath = AppDomain.CurrentDomain.BaseDirectory + "Files/Data.xlsx";
+        private static string selectedExcelPath;
         private List<Data> keyValues = new();
         private List<WordValue> valueIndexes;
         private ObservableCollection<string[]> data = new();
@@ -47,7 +48,7 @@ namespace OfficeHelper
         {
             InitializeComponent();
             ISheet sheet;
-            using (var stream = File.OpenRead(DataPath))
+            using (var stream = File.OpenRead(dataPath))
             {
                 stream.Position = 0;
                 XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
@@ -86,9 +87,10 @@ namespace OfficeHelper
             dialog.Filter = "Excel fayllar|*.xlsx";
             if (dialog.ShowDialog(this) == true)
             {
+                selectedExcelPath = dialog.FileName;
                 List<string> rowList = new List<string>();
                 ISheet sheet;
-                using (var stream = File.OpenRead(dialog.FileName))
+                using (var stream = File.OpenRead(selectedExcelPath))
                 {
                     stream.Position = 0;
                     XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
@@ -113,10 +115,9 @@ namespace OfficeHelper
                                 Header = name,
                                 ItemsSource = keyValues.First(x => x.Name == name).Values.ToList(),
                                 IsReadOnly = false,
-                                TextBinding = new Binding($"[{j}]") { ValidatesOnDataErrors=false, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
+                                TextBinding = new Binding($"[{j}]") { ValidatesOnExceptions = false, ValidatesOnNotifyDataErrors = false, ValidatesOnDataErrors = false, UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged },
                                 EditingElementStyle = (Style)FindResource("ComboBoxEditingStyle"),
                                 ElementStyle = (Style)FindResource("TextBlockComboBoxStyle"),
-                                
                             };
                             dgMain.Columns.Add(column);
                         }
@@ -152,6 +153,7 @@ namespace OfficeHelper
                     }
                 }
             }
+            btnExportToExcel.IsEnabled = true;
         }
 
         private void btnSelectWord_Click(object sender, RoutedEventArgs e)
@@ -282,6 +284,46 @@ namespace OfficeHelper
         {
             var text = ((Column)((Button)sender).DataContext).Name;
             Clipboard.SetText(text);
+        }
+
+        private void btnNewRow_Click(object sender, RoutedEventArgs e)
+        {
+            data.Add(new string[dgMain.Columns.Count]);
+            dgMain.Items.Refresh();
+            dgMain.ScrollIntoView(data.Last());
+        }
+
+        private void btnExportToExcel_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Excel fayl|*.xlsx";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                ISheet sheet;
+                using (var stream = File.OpenRead(selectedExcelPath))
+                {
+                    stream.Position = 0;
+                    XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
+                    sheet = xssWorkbook.GetSheetAt(0);
+                    for (int i = 6; i < sheet.LastRowNum +1; i++)
+                    {
+                        sheet.RemoveRow(sheet.GetRow(i));
+                    }
+                    foreach (var item in data)
+                    {
+                        var row = sheet.CreateRow(sheet.LastRowNum + 1);
+                        foreach (var value in item)
+                        {
+                            row.CreateCell(row.LastCellNum != -1 ? row.LastCellNum : 0).SetCellValue(value);
+                        }
+                    }
+                    using (var fileToSave = File.Open(saveFileDialog.FileName, FileMode.OpenOrCreate))
+                    {
+                        fileToSave.Flush();
+                        xssWorkbook.Write(fileToSave);
+                    }
+                }
+            }
         }
     }
 }
