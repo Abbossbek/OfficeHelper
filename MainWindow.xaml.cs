@@ -31,6 +31,7 @@ namespace OfficeHelper
         private List<WordValue> valueIndexes;
         private ObservableCollection<string[]> data = new();
         private bool accepted;
+        private int editingIndex;
 
         public List<Column> Columns { get; set; } = new();
         public string WordPath { get; set; }
@@ -91,7 +92,9 @@ namespace OfficeHelper
 
                     int cellCount = headerRow1.LastCellNum;
                     Columns.Clear();
+                    var temp = dgMain.Columns[0];
                     dgMain.Columns.Clear();
+                    dgMain.Columns.Add(temp);
                     for (int j = 0; j < cellCount; j++)
                     {
                         string name = headerRow2.GetCell(j).ToString();
@@ -129,10 +132,7 @@ namespace OfficeHelper
                         {
                             if (row.GetCell(j) != null)
                             {
-                                if (!string.IsNullOrEmpty(row.GetCell(j).ToString()) && !string.IsNullOrWhiteSpace(row.GetCell(j).ToString()))
-                                {
-                                    rowList.Add(row.GetCell(j).ToString());
-                                }
+                                rowList.Add(row.GetCell(j).ToString());
                             }
                         }
                         if (rowList.Count > 0)
@@ -296,7 +296,7 @@ namespace OfficeHelper
                     stream.Position = 0;
                     XSSFWorkbook xssWorkbook = new XSSFWorkbook(stream);
                     sheet = xssWorkbook.GetSheetAt(0);
-                    for (int i = 6; i < sheet.LastRowNum +1; i++)
+                    for (int i = 6; i < sheet.LastRowNum + 1; i++)
                     {
                         sheet.RemoveRow(sheet.GetRow(i));
                     }
@@ -314,6 +314,69 @@ namespace OfficeHelper
                         xssWorkbook.Write(fileToSave);
                     }
                 }
+            }
+        }
+
+        private void btnBack_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btnNext_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            dhMain.IsOpen = false;
+            data[editingIndex] = (string[])ugDialogHost.DataContext;
+            dgMain.Items.Refresh();
+        }
+
+        private void btnEdit_Click(object sender, RoutedEventArgs e)
+        {
+            editingIndex = data.IndexOf((string[])((Button)sender).DataContext);
+            GenerateEditor(((Button)sender).DataContext);
+            dhMain.IsOpen = true;
+        }
+
+        private void GenerateEditor(object values)
+        {
+            ugDialogHost.Height = 0;
+            ugDialogHost.Children.Clear();
+            ugDialogHost.DataContext = values;
+            for (int i = 0; i < Columns.Count; i++)
+            {
+                string name = Columns[i].Name.Trim('[', ']');
+                var tb = new TextBlock
+                {
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    MaxWidth = 500,
+                    Text = name,
+                };
+                ugDialogHost.Children.Add(tb);
+                if (keyValues.Any(x => x.Name == name))
+                {
+                    var cb = new ComboBox()
+                    {
+                        ItemsSource = keyValues.First(x => x.Name == name).Values.ToList(),
+                        IsEditable = true,
+                    };
+                    cb.SetBinding(ComboBox.TextProperty, $"[{i}]");
+                    ugDialogHost.Children.Add(cb);
+                }
+                else
+                {
+                    var tbx = new TextBox()
+                    {
+                        VerticalContentAlignment = System.Windows.VerticalAlignment.Center
+                    };
+                    tbx.SetBinding(TextBox.TextProperty, $"[{i}]");
+                    ugDialogHost.Children.Add(tbx);
+                }
+                ugDialogHost.Height += 40;
             }
         }
     }
