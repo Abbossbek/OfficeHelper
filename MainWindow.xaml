@@ -65,8 +65,8 @@
                         DockPanel.Dock="Bottom"
                         Margin="20"
                         Click="btnSave_Click" />
-                <ScrollViewer>
-                    <UniformGrid
+                <ScrollViewer VerticalScrollBarVisibility="Hidden" Background="#11FFFFFF" Padding="10">
+                    <UniformGrid Margin="10"
                         x:Name="ugDialogHost"
                         Columns="2"
                         Height="0"/>
