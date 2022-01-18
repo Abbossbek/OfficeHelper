@@ -52,6 +52,11 @@
         <Style
             TargetType="TextBox"
             BasedOn="{StaticResource MaterialDesignTextBox}" />
+        <DataTemplate
+            x:Key="datePickerTemplate">
+            <DatePicker
+                Text="{Binding}"></DatePicker>
+        </DataTemplate>
     </Window.Resources>
     <materialDesign:DialogHost
         x:Name="dhMain"

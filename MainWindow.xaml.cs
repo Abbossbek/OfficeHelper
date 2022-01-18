@@ -115,6 +115,15 @@ namespace OfficeHelper
                             };
                             dgMain.Columns.Add(column);
                         }
+                        //else if (name.Contains("санаси"))
+                        //{
+                        //    var column = new DataGridTemplateColumn
+                        //    {
+                        //        CellTemplate = (DataTemplate)FindResource("datePickerTemplate"),
+                        //        Header = name
+                        //    };
+                        //    dgMain.Columns.Add(column);
+                        //}
                         else
                         {
                             dgMain.Columns.Add(new DataGridTextColumn() { Binding = new Binding($"[{j}]"), Header = name });
@@ -315,16 +324,6 @@ namespace OfficeHelper
                     }
                 }
             }
-        }
-
-        private void btnBack_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void btnNext_Click(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)
