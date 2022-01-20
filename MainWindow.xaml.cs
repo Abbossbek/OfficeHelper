@@ -378,5 +378,22 @@ namespace OfficeHelper
                 ugDialogHost.Height += 40;
             }
         }
+
+        private void tbSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var source = CollectionViewSource.GetDefaultView(data);
+            source.Filter = p => Filter((string[])p);
+            dgMain.Items.Refresh();
+        }
+
+        private bool Filter(string[] items)
+        {
+            bool result = false;
+            foreach (string s in items)
+            {
+                result |= s.ToLower().Contains(tbSearch.Text.ToLower());
+            }
+            return result;
+        }
     }
 }

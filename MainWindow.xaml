@@ -62,19 +62,24 @@
         x:Name="dhMain"
         CloseOnClickAway="False">
         <materialDesign:DialogHost.DialogContent>
-            <DockPanel Margin="10">
-                    <Button
-                        Content="Saqlash"
-                        x:Name="btnSave"
-                        Background="Green"
-                        DockPanel.Dock="Bottom"
-                        Margin="20"
-                        Click="btnSave_Click" />
-                <ScrollViewer VerticalScrollBarVisibility="Hidden" Background="#11FFFFFF" Padding="10">
-                    <UniformGrid Margin="10"
+            <DockPanel
+                Margin="10">
+                <Button
+                    Content="Saqlash"
+                    x:Name="btnSave"
+                    Background="Green"
+                    DockPanel.Dock="Bottom"
+                    Margin="20"
+                    Click="btnSave_Click" />
+                <ScrollViewer
+                    VerticalScrollBarVisibility="Hidden"
+                    Background="#11FFFFFF"
+                    Padding="10">
+                    <UniformGrid
+                        Margin="10"
                         x:Name="ugDialogHost"
                         Columns="2"
-                        Height="0"/>
+                        Height="0" />
                 </ScrollViewer>
             </DockPanel>
         </materialDesign:DialogHost.DialogContent>
@@ -99,27 +104,35 @@
             <Border
                 Margin="10"
                 CornerRadius="10">
-                <DataGrid
-                    x:Name="dgMain"
-                    AutoGenerateColumns="False"
-                    IsReadOnly="False"
-                    Background="{DynamicResource MaterialDesignDarkSeparatorBackground}"
-                    CanUserAddRows="False">
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button
-                                        x:Name="btnEdit"
-                                        Click="btnEdit_Click">
-                                        <materialDesign:PackIcon
-                                            Kind="Edit" />
-                                    </Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <DockPanel>
+                    <TextBox
+                        x:Name="tbSearch"
+                        DockPanel.Dock="Top"
+                        Margin="5"
+                        materialDesign:HintAssist.Hint="Qidirish"
+                        TextChanged="tbSearch_TextChanged" />
+                    <DataGrid
+                        x:Name="dgMain"
+                        AutoGenerateColumns="False"
+                        IsReadOnly="False"
+                        Background="{DynamicResource MaterialDesignDarkSeparatorBackground}"
+                        CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button
+                                            x:Name="btnEdit"
+                                            Click="btnEdit_Click">
+                                            <materialDesign:PackIcon
+                                                Kind="Edit" />
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
             </Border>
             <ProgressBar
                 Grid.Row="1"
