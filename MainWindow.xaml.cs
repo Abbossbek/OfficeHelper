@@ -128,7 +128,7 @@ namespace OfficeHelper
                         {
                             dgMain.Columns.Add(new DataGridTextColumn() { Binding = new Binding($"[{j}]"), Header = name });
                         }
-                        Columns.Add(new() { Name = $"[{name}]", IsChecked = false });
+                        Columns.Add(new() { Name = $"{{{name}}}", IsChecked = false });
                     }
                     lbColumns.Items.Refresh();
                     data.Clear();
@@ -171,15 +171,15 @@ namespace OfficeHelper
                     {
                         for (int i = 0; i < doc.Paragraphs.Count; i++)
                         {
-                            for (int j = 0; j < doc.Paragraphs[i].Runs.Count; j++)
-                            {
-                                string text = doc.Paragraphs[i].Runs[j].GetText(0);
+                            //for (int j = 0; j < doc.Paragraphs[i].Runs.Count; j++)
+                            //{
+                                string text = doc.Paragraphs[i].Text;
                                 if (text != null && text.Contains(Columns[h].Name))
                                 {
                                     Columns[h].IsChecked = true;
-                                    valueIndexes.Add(new() { ColumnIndex = h, ParagraphIndex = i, RunIndex = j });
+                                    valueIndexes.Add(new() { ColumnIndex = h, ParagraphIndex = i });
                                 }
-                            }
+                            //}
                         }
                     }
                     lbColumns.Items.Refresh();
@@ -207,9 +207,7 @@ namespace OfficeHelper
                     XWPFDocument doc = new XWPFDocument(sw);
                     foreach (var value in valueIndexes)
                     {
-                        var text = doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].GetText(0);
-                        text = text.Replace(Columns[value.ColumnIndex].Name, item[value.ColumnIndex].ToString());
-                        doc.Paragraphs[value.ParagraphIndex].Runs[value.RunIndex].SetText(text, 0);
+                        doc.Paragraphs[value.ParagraphIndex].ReplaceText(Columns[value.ColumnIndex].Name, item[value.ColumnIndex].ToString());
                     }
                     var fileName = "";
                     using (var file = File.Create(GetFileName(Path.GetFileName(WordPath))))

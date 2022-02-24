@@ -10,6 +10,5 @@ namespace OfficeHelper.Models
     {
         public int ColumnIndex { get; set; }
         public int ParagraphIndex { get; set; }
-        public int RunIndex { get; set; }
     }
 }
